@@ -1,71 +1,64 @@
 <?php
  
-session_start();
+    require_once('classes/database.php');
+    require_once('classes/functions.php');
  
-require_once('classes/database.php');
-require_once('classes/functions.php');
-$con = new database();
-
-$data = $con->opencon();
-$sweetAlertConfig = "";
-if (isset($_POST['multisave'])) {
-
-  echo 'submit';
-
-    $email = $_POST['email'];
-    $username = $_POST['username'];
-    $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
-    $firstname = $_POST['firstname'];
-    $lastname = $_POST['lastname'];
-    $birthday = $_POST['birthday'];
-    $sex = $_POST['sex'];
-    $phone = $_POST['phone'];
-    
+    $con = new database();
+    $sweetAlertConfig = "";
  
-
-    $profile_picture_path = handleFileUpload ($_FILES["profile_picture"]);
-    if ($profile_picture_path === false) {
-      $_SESSION['error'] = "Sorry, there was an error uploading your file or the file is invalid";
-    }else{
-
-      $userID = $con->signupUser($firstname, $lastname, $birthday, $sex, $email, $phone, $username, $password, $profile_picture_path);
-
-      if($userID){
-
-        $street = $_POST['user_street'];
-        $barangay = $_POST['user_barangay'];
-        $city = $_POST['user_city'];
-        $province = $_POST['user_province'];
-
-        if ($con->insertAddress($userID, $street, $barangay, $city, $province)){
-          $sweetAlertConfig = "
-    <script>
-    Swal.fire({
-      icon: 'success',
-      title: 'Registration Successful',
-      text: 'Your account has been created succesfully!',
-      confirmButtonText: 'OK'
-    }).then((result) => {
-    if (result.isConfirmed) {
-    window.location.href = 'login.php';
-    }
-    });
-    </script> ";
-  }else{
-    $_SESSION['error'] = "Error occured while inserting address. Please try again";
-  }
-        
-      }else{
-        $_SESSION['error'] = "Sorry, there was an error signing up";
+    if (isset($_POST['multisave'])) {
+      $email = $_POST['email'];
+      $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
+      $firstname = $_POST['firstname'];
+      $lastname = $_POST['lastname'];
+      $birthday = $_POST['birthday'];
+      $sex = $_POST['sex'];
+      $phone = $_POST['phone'];
+      $username = $_POST['username'];
+ 
+      $profile_picture_path = handleFileUpload($_FILES["profile_picture"]);
+      if ($profile_picture_path === false) {
+        $_SESSION['error'] = "Sorry, there was an error uploading your file or the file is invalid.";
+      } else {
+ 
+        $user_id = $con->signupUser($firstname, $lastname, $birthday, $sex, $email, $phone, $username, $password, $profile_picture_path);
+ 
+        if ($user_id) {
+          $street = $_POST['user_street'];
+          $barangay = $_POST['user_barangay'];
+          $city = $_POST['user_city'];
+          $province = $_POST['user_province'];
+ 
+          if ($con->insertAddress($user_id, $street, $barangay, $city, $province)) {
+            $sweetAlertConfig = "
+              <script>
+                  Swal.fire({
+                    icon: 'success',
+                    title: 'Registration Successful',
+                    text: 'Your account has been created successfully!',
+                    confirmButtonText: 'OK'
+                  }).then((result) => {
+                    if (result.isConfirmed) {
+                      window.location.href = 'index.php';
+                    }
+                  });
+              </script>";
+          } else {
+            $_SESSION['error'] = "Error occured while inserting address. Please try again.";
+          }
+        } else {
+          $_SESSION['error'] = "Sorry, there was an error signing up.";
+        }
+ 
       }
-
+ 
+     
+ 
     }
-}
+ 
 ?>
-
-
-
-
+ 
+ 
 <!doctype html>
 <html lang="en">
 <head>
@@ -73,14 +66,13 @@ if (isset($_POST['multisave'])) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href="./package/dist/sweetalert2.css">
   <link rel="stylesheet" href="./bootstrap-4.5.3-dist/css/bootstrap.css">
   <link rel="stylesheet" href="./bootstrap-5.3.3-dist/css/bootstrap.css">
-  
   <!-- JQuery for Address Selector -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  
-  
+ 
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+ 
   <title>LMS | Registration</title>
   <style>
     .form-step {
@@ -92,12 +84,11 @@ if (isset($_POST['multisave'])) {
   </style>
 </head>
 <body>
-<script src="./package/dist/sweetalert2.js"></script>
 <?php
 // Output SweetAlert script if set
 if (!empty($sweetAlertConfig)) {
     echo $sweetAlertConfig;
-    exit; // Stop further execution
+    exit; // Stop further execution 
 }
 ?>
 <div class="container custom-container rounded-3 shadow my-5 p-3 px-5">
@@ -108,7 +99,7 @@ if (!empty($sweetAlertConfig)) {
       <div class="card mt-4">
         <div class="card-header bg-info text-white">Account Information</div>
         <div class="card-body">
-
+ 
         <div class="form-group">
             <label for="username">Username:</label>
             <input type="text" class="form-control" name="username" id="username" placeholder="Enter username" required>
@@ -129,7 +120,7 @@ if (!empty($sweetAlertConfig)) {
             <div class="valid-feedback">Looks good!</div>
             <div class="invalid-feedback">Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one special character.</div>
           </div>
-
+ 
           <div class="form-group">
             <label for="confirmPassword">Confirm Password:</label>
             <input type="password" class="form-control" name="confirmPassword" placeholder="Re-enter your password" required>
@@ -139,8 +130,12 @@ if (!empty($sweetAlertConfig)) {
         </div>
       </div>
       <button type="button" id="nextButton" class="btn btn-primary mt-3" onclick="nextStep()">Next</button>
+      <div class="my-3 text-end">
+        <span>Already have an account?</span>
+        <a href="index.php" class="btn btn-link p-0 align-baseline"> Sign in!</a>
+      </div>
     </div>
-
+ 
     <!-- Step 2 -->
     <div class="form-step" id="step-2">
       <div class="card mt-4">
@@ -177,7 +172,7 @@ if (!empty($sweetAlertConfig)) {
               <div class="valid-feedback">Looks good.</div>
               <div class="invalid-feedback">Please select a sex.</div>
             </div>
-
+ 
               <!-- New Phone Number field -->
                 <div class="form-group col-md-6">
         <label for="phone">Phone Number:</label>
@@ -194,7 +189,7 @@ if (!empty($sweetAlertConfig)) {
       <button type="button" class="btn btn-secondary mt-3" onclick="prevStep()">Previous</button>
       <button type="button" class="btn btn-primary mt-3" onclick="nextStep()">Next</button>
     </div>
-
+ 
     <!-- Step 3 -->
     <div class="form-step" id="step-3">
       <div class="card mt-4">
@@ -248,30 +243,26 @@ if (!empty($sweetAlertConfig)) {
 <!-- Script for Address Selector -->
 <script src="ph-address-selector.js"></script>
 <!-- Script for Form Validation -->
-
-
- 
-
 <script>
-  
+ 
     document.addEventListener("DOMContentLoaded", () => {
       const form = document.querySelector("form");
       const birthdayInput = document.getElementById("birthday");
       const steps = document.querySelectorAll(".form-step");
       let currentStep = 0;
-  
+ 
       // Set the max attribute of the birthday input to today's date
       const today = new Date().toISOString().split('T')[0];    
       birthdayInput.setAttribute('max', today);
-
+ 
       // Add event listeners for real-time validation
       const inputs = form.querySelectorAll("input, select");
       inputs.forEach(input => {
         input.addEventListener("input", () => validateInput(input));
         input.addEventListener("change", () => validateInput(input));
       });
-
-      //MultiStep Logic 
+ 
+      //MultiStep Logic
   // Add an event listener to the form's submit event
   form.addEventListener("submit", (event) => {
   // Prevent form submission if the current step is not valid
@@ -279,11 +270,11 @@ if (!empty($sweetAlertConfig)) {
     event.preventDefault();
     event.stopPropagation();
   }
-
+ 
   // Add the 'was-validated' class to the form for Bootstrap styling
   form.classList.add("was-validated");
 }, false);
-
+ 
 // Function to move to the next step
 window.nextStep = () => {
   // Only proceed to the next step if the current step is valid
@@ -293,31 +284,31 @@ window.nextStep = () => {
     steps[currentStep].classList.add("form-step-active"); // Show the next step
   }
 };
-
+ 
 // Function to move to the previous step
 window.prevStep = () => {
   steps[currentStep].classList.remove("form-step-active"); // Hide the current step
   currentStep--; // Decrement the current step index
   steps[currentStep].classList.add("form-step-active"); // Show the previous step
 };
-
+ 
 // Function to validate all inputs in the current step
 function validateStep(step) {
   let valid = true;
   // Select all input and select elements in the current step
   const stepInputs = steps[step].querySelectorAll("input, select");
-
+ 
   // Validate each input element
   stepInputs.forEach(input => {
     if (!validateInput(input)) {
       valid = false; // If any input is invalid, set valid to false
     }
   });
-
+ 
   return valid; // Return the overall validity of the step
 }
-
-  
+ 
+ 
       function validateInput(input) {
         if (input.name === 'password') {
           return validatePassword(input);
@@ -335,7 +326,7 @@ function validateStep(step) {
           }
         }
       }
-  
+ 
       function validatePassword(passwordInput) {
         const password = passwordInput.value;
         const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
@@ -349,12 +340,12 @@ function validateStep(step) {
           return false;
         }
       }
-  
+ 
       function validateConfirmPassword(confirmPasswordInput) {
         const passwordInput = form.querySelector("input[name='password']");
         const password = passwordInput.value;
         const confirmPassword = confirmPasswordInput.value;
-      
+     
         if (password === confirmPassword && password !== '') {
           confirmPasswordInput.classList.remove("is-invalid");
           confirmPasswordInput.classList.add("is-valid");
@@ -365,73 +356,18 @@ function validateStep(step) {
           return false;
         }
       }
-      
+     
     });
   </script>
-
-<script>
-$(document).ready(function(){
+ 
+<!-- Split -->
+ 
+   <script>
+  $(document).ready(function(){
     function toggleNextButton(isEnabled) {
         $('#nextButton').prop('disabled', !isEnabled);
     }
-
-    $('#username').on('input', function(){
-        var username = $(this).val();
-        if (username.length > 0) {
-            $.ajax({
-                url: 'AJAX/check_username.php',
-                method: 'POST',
-                data: { username: username },
-                dataType: 'json',
-                success: function(response) {
-                    if (response.exists) {
-                        // Email is already taken
-                        $('#username').removeClass('is-valid').addClass('is-invalid');
-                        $('#usernameFeedback').text('Username is already taken.').show();
-                        $('#username')[0].setCustomValidity('Username is already taken.');
-                        $('#username').siblings('.invalid-feedback').not('#usernameFeedback').hide();
-                        toggleNextButton(false); // ❌ Disable next button
-                    } else {
-                        // Email is valid and available
-                        $('#username').removeClass('is-invalid').addClass('is-valid');
-                        $('#usernameFeedback').text('').hide();
-                        $('#username')[0].setCustomValidity('');
-                        $('#username').siblings('.valid-feedback').show();
-                        toggleNextButton(true); // ✅ Enable next button
-                    }
-                },
-                error: function(xhr, status, error) {
-                    alert('An error occurred: ' + error);
-                }
-            });
-        } else {
-            // Empty input reset
-            $('#username').removeClass('is-valid is-invalid');
-            $('#usernameFeedback').text('').hide();
-            $('#username')[0].setCustomValidity('');
-            toggleNextButton(false); // ❌ Disable next button
-        }
-    });
-
-    $('#username').on('invalid', function() {
-        if ($('#username')[0].validity.valueMissing) {
-            $('#username')[0].setCustomValidity('Please enter a valid username.');
-            $('#usernameFeedback').hide();
-            toggleNextButton(false); // ❌ Disable next button
-        }
-    });
-});
-</script>
-
- <!-- AJAX for live checking of existing username (should be pasted in the registration.php) (CODE ENDS HERE) -->
-
-  <!-- AJAX for live checking of existing emails (inside the registration.php) (CODE STARTS HERE) -->
-<script>
-$(document).ready(function(){
-    function toggleNextButton(isEnabled) {
-        $('#nextButton').prop('disabled', !isEnabled);
-    }
-
+ 
     $('#email').on('input', function(){
         var email = $(this).val();
         if (email.length > 0) {
@@ -469,7 +405,7 @@ $(document).ready(function(){
             toggleNextButton(false); // ❌ Disable next button
         }
     });
-
+ 
     $('#email').on('invalid', function() {
         if ($('#email')[0].validity.valueMissing) {
             $('#email')[0].setCustomValidity('Please enter a valid email.');
@@ -478,7 +414,63 @@ $(document).ready(function(){
         }
     });
 });
-</script>
-
+  </script>
+ 
+  <!-- Split -->
+ 
+<script>
+  $(document).ready(function(){
+    function toggleNextButton(isEnabled) {
+        $('#nextButton').prop('disabled', !isEnabled);
+    }
+ 
+    $('#username').on('input', function(){
+        var username = $(this).val();
+        if (username.length > 0) {
+            $.ajax({
+                url: 'AJAX/check_username.php',
+                method: 'POST',
+                data: { username: username },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.exists) {
+                        // Username is already taken
+                        $('#username').removeClass('is-valid').addClass('is-invalid');
+                        $('#usernameFeedback').text('Username is already taken.').show();
+                        $('#username')[0].setCustomValidity('Username is already taken.');
+                        $('#username').siblings('.invalid-feedback').not('#usernameFeedback').hide();
+                        toggleNextButton(false); // ❌ Disable next button
+                    } else {
+                        // Username is valid and available
+                        $('#username').removeClass('is-invalid').addClass('is-valid');
+                        $('#usernameFeedback').text('').hide();
+                        $('#username')[0].setCustomValidity('');
+                        $('#username').siblings('.valid-feedback').show();
+                        toggleNextButton(true); // ✅ Enable next button
+                    }
+                },
+                error: function(xhr, status, error) {
+                    alert('An error occurred: ' + error);
+                }
+            });
+        } else {
+            // Empty input reset
+            $('#username').removeClass('is-valid is-invalid');
+            $('#usernameFeedback').text('').hide();
+            $('#username')[0].setCustomValidity('');
+            toggleNextButton(false); // ❌ Disable next button
+        }
+    });
+ 
+    $('#username').on('invalid', function() {
+        if ($('#username')[0].validity.valueMissing) {
+            $('#username')[0].setCustomValidity('Please enter a valid username.');
+            $('#usernameFeedback').hide();
+            toggleNextButton(false); // ❌ Disable next button
+        }
+    });
+});
+  </script>
+ 
   </body>
   </html>
